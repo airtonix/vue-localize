@@ -1,0 +1,32 @@
+{
+  "name": "vue-localize",
+  "version": "1.0.0",
+  "description": "Localization plugin for Vue.js based applications",
+  "main": "vue-localize.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "lodash": "^4.6.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Saymon-biz/vue-localize.git"
+  },
+  "keywords": [
+    "Vue",
+    "i18n",
+    "localization",
+    "multilingual",
+    "vuex"
+  ],
+  "author": {
+    "name": "Saymon",
+    "email": "saymon.biz@gmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Saymon-biz/vue-localize/issues"
+  },
+  "homepage": "https://github.com/Saymon-biz/vue-localize#readme"
+}
