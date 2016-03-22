@@ -1,3 +1,5 @@
 /node_modules
 /dist/*
 !.gitignore
+vue-localize.sublime-project
+vue-localize.sublime-workspace
