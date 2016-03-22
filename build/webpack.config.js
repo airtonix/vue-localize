@@ -13,7 +13,8 @@ module.exports = {
   output: {
       path: "./dist",
       filename: "vue-localize.js",
-      library: "VueLocalize"
+      library: "VueLocalize",
+      libraryTarget: "umd"
   },
   plugins: [
       new webpack.BannerPlugin(banner, {raw: true})

@@ -1,113 +1,280 @@
-import { kebabCase, replace, join, split, each } from 'lodash'
+import { kebabCase, replace, join, split, each, has, get, set, unset, clone, cloneDeep } from 'lodash'
+import { currentLanguage, routeLocalized } from './getters'
+import Vue from 'vue'
 
-/*
+Vue.mixin({
+  vuex: {
+    getters: {
+      currentLanguage: currentLanguage,
+      routeLocalized: routeLocalized
+    }
+  }
+})
 
-@options explanation:
+/**
+ * Recursive renaming subrouts
+ */
+const _localizeSubroutes = function (subroutes, lang, routesRegistry) {
+  each(subroutes, function (route, path) {
+    if (has(route, 'name')) {
+      set(routesRegistry.initial, route.name, path)
+      route.originalName = route.name
+      route.name = lang + '_' + route.name
+      set(routesRegistry.localized, route.name, lang)
+    }
 
-@storage                            - an instance of a vuex storage
+    if (has(route, 'subRoutes')) {
+      var objSubs = clone(route.subRoutes)
+      unset(route, 'subRoutes')
 
-@translations             - object  - an object with application phrases and their translations
+      var subs = cloneDeep(objSubs)
+      var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
+      route.subRoutes = subroutesLocalized
+    }
+  })
 
-@defaultContextName       - String  - name of the default context in object with translations
+  return subroutes
+}
 
-@fallbackLanguage         - string  - code of the language into which to translate
-                                      if the translation to requested language wasn't found.
-                                      If there is no translation to the fallback language, will be
-                                      returned the "_uT_" prefix (undefined translation), concatenated
-                                      with the phrase key. Example:
-                                          for phrase {{ 'hello' | translate }} will bw returned "_uT_hello"
+/**
+ * Adding components objects into the routes config
+ */
+const _addComponents = function (routes, components) {
+  each(routes, function (route, path) {
+    var componentName = route.component
+    route.component = get(components, componentName)
 
-@fallbackOnNoTranslation  - boolean - defines the plugin behaviour if there are no translation for target language
-                                      if true - will be returned the translation into fallback language, else -
-                                      the string key concatenated from the prefix '_uT_' and the name of the phrase key.
-                                      May be useful on production environment if there are incomplete translations into some languages
+    if (has(route, 'subRoutes')) {
+      _addComponents(route.subRoutes, components)
+    }
+  })
 
-@supressWarnings          - boolean - set to true if need to disable warnings on development environment
-                                      to prevent console littering. It is recommended to set this option to false when
-                                      validating and testing application after development. It helps you to find
-                                      places in code where something related to localization is missing
-                                      (context, key or translation)
+  return routes
+}
 
-*/
+/**
+ * Localization of routes
+ * @todo by Saymon: suspicion that we have different instatnces of the same component when calling clone/cloneDeep
+ * if it's true, need to remove component objects before cloning and then map its after
+ */
+export const localizeRoutes = function (routes, langConfig, components) {
+  var routesRegistry = { initial: {}, localized: {} }
+  each(routes, function (routeConfig, path) {
+    if (!has(routeConfig, 'localized')) {
+      return
+    }
 
+    if (has(routeConfig, 'name')) {
+      set(routesRegistry.initial, routeConfig.name, path)
+    }
+
+    var objRoute = clone(routeConfig)
+    unset(routes, path)
+
+    if (has(objRoute, 'subRoutes')) {
+      var objSubs = clone(objRoute.subRoutes)
+      unset(objRoute, 'subRoutes')
+    }
+
+    each(langConfig.list, function (config, lang) {
+      if (!config.enabled) {
+        return
+      }
+
+      var newNode = clone(objRoute)
+      var suffix = ''
+      if (path[0] === '/' && path.length === 1) {
+        suffix = ''
+      } else if (path[0] === '/' && path.length > 1) {
+        suffix = path
+      } else if (path[0] !== '/') {
+        suffix = '/' + path
+      }
+
+      var prefix = lang
+      if (langConfig.defaultLanguageRoute === false) {
+        prefix = langConfig.defaultLanguage !== lang ? lang : ''
+      }
+
+      var newPath = '/' + prefix + suffix
+      newNode.lang = lang
+
+      var subs = cloneDeep(objSubs)
+      var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
+      newNode.subRoutes = subroutesLocalized
+      set(routes, newPath, newNode)
+    })
+  })
+
+  /* IF DEBUG
+  console.log(routesRegistry)
+  console.log(JSON.stringify(routes, null, ' '))
+  if (true) {
+    throw new Error()
+  }
+  /* IF DEBUG */
+
+  _addComponents(routes, components)
+
+  return {
+    map: routes,
+    routesRegistry: routesRegistry
+  }
+}
+
+/**
+ * @Vue     {Object} -
+ * @options {Object} - plugin options
+ */
 function install (Vue, options) {
-  var {
-    store,
-    translations,
-    defaultContextName = 'global',
-    fallbackLanguage = 'en',
-    fallbackOnNoTranslation = false,
-    supressWarnings = false
-  } = options
-
+  /**
+   * @store           {Object} - an instance of a vuex storage
+   * @config          {Object} - config object
+   * @routesRegistry  {Object} - registry of a routes (with initial names and localized names)
+   */
+  var { store, config, router, routes, components } = options
+  const VARIABLES_REGEXP = /%[a-z]*%/g
   const {
     bind
   } = Vue.util
 
+  const routesMap = localizeRoutes(routes, config, components)
+  const routesRegistry = routesMap.routesRegistry
+
+  router.map(routesMap.map)
+
+  router.beforeEach(function (transition) {
+    const currentLanguage = store.state.vueLocalize.currentLanguage
+    if (transition.to.localized) {
+      /* prevent unnecessary mutation call  */
+      if (currentLanguage !== transition.to.lang) {
+        store.dispatch('SET_APP_LANGUAGE', transition.to.lang, config.resaveOnLocalizedRoutes, 'main.js LOCALIZED')
+      }
+    } else if (transition.from.localized === true && !config.resaveOnLocalizedRoutes) {
+      // Restore memorized language from local storage for not localized routes
+      var localStoredLanguage = window.localStorage.getItem('currentLanguage')
+      if (localStoredLanguage && /* prevent unnecessary mutation call  */ transition.from.lang !== localStoredLanguage) {
+        store.dispatch('SET_APP_LANGUAGE', localStoredLanguage, false, 'main.js NOT LOCALIZED')
+      }
+    }
+    transition.next()
+  })
+
   /**
-   * Translates the key into the current language or into the language received in 'lang' param
+   * Returns current selected application language
+   * @return {String}
+   */
+  function _currentLanguage () {
+    return store.state[config.vuexStoreModuleName].currentLanguage
+  }
+
+  /**
+   * Get the path of a phrase and translates it into the current
+   * selected application language or into the language received in 'lang' param
    *
-   * @param   {String} key
-   * @param   {String} context
+   * @param   {String} path
    * @param   {Object} vars
    * @param   {string} lang
    * @return  {String}
    */
-  function translate (key, context = defaultContextName, vars = null, lang = null) {
-    var lc = store.state.i18n.languageCurrent
+  function translate (path, vars = null, lang = null) {
+    var lc = _currentLanguage()
     var translateTo = lang || lc
 
-    var isContext = translations.hasOwnProperty(context)
-    if (!isContext) {
-      if (!supressWarnings) {
-        console.warn('VueLocalize. Undefined context: "' + context + '"')
+    var phrasePathParts = split(path, '.')
+    var isGlobal = phrasePathParts.length === 1
+    var exactPath = isGlobal ? config.defaultContextName + '.' + path : path
+
+    if (!has(config.translations, exactPath)) {
+      if (!config.supressWarnings) {
+        console.warn('[VueLocalize]. Undefined path: "' + exactPath + '"')
       }
 
-      return '_uC_' + key
+      return exactPath
     }
 
-    var isKey = translations[context].hasOwnProperty(key)
-    if (!isKey) {
-      if (!supressWarnings) {
-        console.warn('VueLocalize. Undefined key: "' + context + '.' + key + '"')
+    var translationPath = exactPath + '.' + translateTo
+    var isTranslationExists = has(config.translations, translationPath)
+    if (isTranslationExists) {
+      var translationExpected = get(config.translations, translationPath)
+      return _processVariables(translationExpected, vars, translationPath)
+    }
+
+    if (!config.fallbackOnNoTranslation) {
+      if (!config.supressWarnings) {
+        console.warn('[VueLocalize]. Undefined translation: "' + translationPath + '"')
       }
 
-      return '_uK_' + key
+      return exactPath
     }
 
-    var isTranslation = translations[context][key].hasOwnProperty(translateTo)
-    if (isTranslation) {
-      var translation = translations[context][key][translateTo]
-      var targetPath = context + '.' + key + '.' + translateTo
-      return _processVariables(translation, vars, targetPath)
+    var fallbackTranslationPath = exactPath + '.' + config.fallbackLanguage
+    var isFallbackTranslationExists = has(config.translations, fallbackTranslationPath)
+
+    if (translateTo === config.fallbackLanguage || !isFallbackTranslationExists) {
+      if (!config.supressWarnings) {
+        console.warn('[VueLocalize]. Undefined FALLBACK translation: "' + fallbackTranslationPath + '"')
+      }
+
+      return exactPath
     }
 
-    if (!supressWarnings) {
-      console.warn('VueLocalize. Undefined translation: "' + context + '.' + key + '.' + translateTo + '"')
-    }
-
-    var keyToReturn = '_uT_' + key
-
-    if (!fallbackOnNoTranslation) {
-      return keyToReturn
-    }
-
-    if (translateTo === fallbackLanguage) {
-      return keyToReturn
-    }
-
-    var isFallbackTranslation = translations[context][key].hasOwnProperty(fallbackLanguage)
-    if (!isFallbackTranslation) {
-      return keyToReturn
-    }
-
-    var fallbackTranslation = translations[context][key][fallbackLanguage]
-    var fallbackPath = context + '.' + key + '.' + fallbackLanguage
-    return _processVariables(fallbackTranslation, vars, fallbackPath)
+    var translationFallback = get(config.translations, fallbackTranslationPath)
+    return _processVariables(translationFallback, vars, fallbackTranslationPath)
   }
 
+  /**
+   * Localize route name by adding prefix (e.g. 'en_') with language code.
+   * @todo by Saymon: should to consider is route localized
+   */
+  function localizeRoute (name, lang = null) {
+    if (!has(routesRegistry.initial, name)) {
+      return name
+    }
+
+    var prefix = (lang || _currentLanguage()) + '_'
+    return prefix + name
+  }
+  Vue.prototype['$localizeRoute'] = localizeRoute
+
+  function translateRoutePath (path, name, newLang) {
+    if (!has(routesRegistry.initial, name) && !has(routesRegistry.localized, name)) {
+      return path
+    }
+
+    if (config.defaultLanguageRoute === true) {
+      return replace(path, /^.{3}/g, '/' + newLang)
+    }
+
+    if (config.defaultLanguage === _currentLanguage()) {
+      return '/' + newLang + path
+    }
+
+    if (newLang === config.defaultLanguage) {
+      var newPath = replace(path, /^.{3}/g, '')
+      if (!newPath.length) {
+        newPath = '/'
+      }
+
+      return newPath
+    }
+  }
+  Vue.prototype['$translateRoutePath'] = translateRoutePath
+
+  /**
+   * Object with VueLocalize config
+   */
+  const localizeConf = config
+  Vue.prototype['$localizeConf'] = localizeConf
+
+  /**
+   * Injects variables values into already translated string by
+   * replcaing their string keys with their real values
+   *
+   * @return {String}
+   */
   function _processVariables (translation, vars, path) {
-    var arrVars = translation.match(/%[a-z]*%/g)
+    var arrVars = translation.match(VARIABLES_REGEXP)
     if (!arrVars) {
       return translation
     }
@@ -121,7 +288,7 @@ function install (Vue, options) {
       translation = replace(translation, key, value)
     })
 
-    var unreplacedVars = translation.match(/%[a-z]*%/g)
+    var unreplacedVars = translation.match(VARIABLES_REGEXP)
     if (unreplacedVars) {
       _logUnreplacedVars(unreplacedVars, path)
     }
@@ -129,48 +296,64 @@ function install (Vue, options) {
     return translation
   }
 
+  /**
+   * Logs warnings into console if the translation contains some unreplaced variable
+   * @return {void}
+   */
   function _logUnreplacedVars (vars, path) {
-    if (!supressWarnings) {
+    if (!config.supressWarnings) {
       console.warn('VueLocalize. Unreplaced: ' + join(vars, ', ') + ' in "' + path + '"')
     }
   }
 
+  // Adding global filter and global method $translate
   var helpers = { translate }
-
   each(helpers, function (helper, name) {
     Vue.filter(kebabCase(name), helper)
     Vue.prototype['$' + name] = helper
   })
 
+  // Adding directive
   Vue.directive('localize', {
-    // twoWay: true,
+
     deep: true,
+
+    /**
+     * Bind watcher for update translation on language changing
+     */
     bind: function () {
       const vm = this.vm
-      this.unwatch = vm.$watch('$store.state.i18n.languageCurrent', bind(this.updateContent, this))
+      this.unwatch = vm.$watch('$store.state.' + config.vuexStoreModuleName + '.currentLanguage', bind(this.updateContent, this))
     },
+
+    /**
+     * Unbind watcher
+     */
     unbind: function () {
       this.unwatch && this.unwatch()
     },
+
+    /**
+     * Render element with directive
+     */
     update: function (target) {
-      var lc = store.state.i18n.languageCurrent
-      // target.lang = lc
-
-      if (target.path) {
-        var pathParts = split(target.path, '.')
-        this.key = pathParts[1]
-        this.context = pathParts[0] || null
-        var translation = translate(this.key, this.context, null, lc)
-      }
-
-      console.log(translation)
-      // this.el.innerHTML = translations[context][key][lc]
+      this.path = target.path
+      this.vars = target.vars
+      this.lang = target.lang
+      var translateTo = target.lang || _currentLanguage()
+      var translation = translate(target.path, target.vars, translateTo)
       this.el.innerHTML = translation
-      // translate('huy')
     },
-    updateContent: function (c) {
-      this.el.innerHTML = translations[this.context][this.key][c]
+
+    /**
+     * Update element innerHTML on language changing
+     */
+    updateContent: function (newLang) {
+      var translateTo = this.lang || newLang
+      var translation = translate(this.path, this.vars, translateTo)
+      this.el.innerHTML = translation
     }
+
   })
 }
 
