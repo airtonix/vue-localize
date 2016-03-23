@@ -18,6 +18,7 @@
 - Translating page title
 - Route path translation tool
 - Option for excluding language part from route path for default language
+- Option for custom name of the key in local storage
 - Global mixin for getting current language in Vue components via Vuex getter "currentLanguage"
 - Translating phrases via Vue filter: ```{{ phrase | translate }}```
 - Translating phrases via direct call of plugin method: ``` {{ $translate(phrase) }} or v-text="$translate(phrase)" ```
