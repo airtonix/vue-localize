@@ -305,7 +305,6 @@ function install (Vue, options) {
 
   /**
    * Localize route name by adding prefix (e.g. 'en_') with language code.
-   * @todo by Saymon: should to consider is route localized
    */
   function localizeRoute (name, lang = null) {
     if (!has(routesRegistry.initial, name)) {
