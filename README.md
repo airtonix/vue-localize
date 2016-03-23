@@ -47,7 +47,9 @@ $ npm install vue-localize --save
 
 Full-featured example of integration in app with Vuex and VueRouter
 
-##### In your entry point (usually index.js or main.js)
+##### Importing and registering VueLocalize plugin
+> In your entry point (usually index.js or main.js)
+
 ```js
 import Vue from 'vue'
 
@@ -55,13 +57,20 @@ import VueRouter from 'vue-router'
 Vue.use(VueRouter)
 
 var router = new VueRouter({
-  // your set of options options
+  // your set of options
 })
 
-import routes from './config/routes'                            // Import routes config obejct
-import vlConfig from './config/vue-localize-conf'               // Import plugin config
-import store from './vuex/store'                                // Import vuex store (required by vue-localize)
-import VueLocalize from 'vue-localize'                          // Import VueLocalize plugin
+// Import routes config obejct
+import routes from './config/routes'
+
+// Import plugin config
+import vlConfig from './config/vue-localize-conf'
+
+// Import vuex store (required by vue-localize)
+import store from './vuex/store'
+
+// Import VueLocalize plugin
+import VueLocalize from 'vue-localize'
 
 Vue.use(VueLocalize, {
   store,
@@ -70,26 +79,136 @@ Vue.use(VueLocalize, {
   routes: routes
 })
 
-import App from './App'                                         // Import App component - root Vue instance
+// Import App component - root Vue instance
+import App from './App'
 
-router.start(App, '#app')                                       // Application start
+// Application start
+router.start(App, '#app')
 ```
 Pay attention (!) there is no line with ```router.map(routes)```.
 When using automatic routes localization, plugin will rebiulds your initial routes config and VueRouter will use already  rebuilded by VueLocalize routes config. So it's built into the plugin
 
-##### In your Vuex store file
-Note that VueLocalize contains built-in Vuex store module, so if you are using Vuex...
-```js
+##### Adding Vuex store module
 
+> Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so.
+Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
+
+So code for your store.js
+```js
+import Vuex from 'vuex'
+import Vue from 'vue'
+import { vueLocalizeVuexStoreModule } from 'vue-localize'
+// import other Vuex modules
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+  modules: {
+    vueLocalizeVuexStoreModule,
+    // other Vuex modules
+  }
+})
 ```
 
+##### Config file
 
-Plugin importing and Vuex module registration
+```js
+import translations from './vue-localize-translations'
+export default {
+  list: {
+    en: {
+      key: 'eng',
+      enabled: true
+    },
+    ru: {
+      key: 'rus',
+      enabled: true
+    },
+    de: {
+      key: 'deu',
+      enabled: false
+    }
+  },
+  defaultLanguage: 'en',
+  translations: translations,
+  defaultLanguageRoute: false,
+  resaveOnLocalizedRoutes: false,
+  defaultContextName: 'global',
+  fallbackOnNoTranslation: false,
+  fallbackLanguage: 'en',
+  supressWarnings: false
+}
+```
+#####Options description
+...
+...
 
-## Configuration options and config tutorial
+##### Translations file example
+```js
+export default {
+  // global context
+  'global': {
+    // translations for language selector items
+    lang: {
+      eng: {
+        en: 'English',
+        ru: 'Английский'
+      },
+      rus: {
+        en: 'Russian',
+        ru: 'Русский'
+      }
+    }
+  },
+  // context for translations of frontend phrases (public section of your site)
+  'site': {
+    // context for translations of header
+    'header': {
+      // context for translations of anchors in nav menu
+      'nav': {
+        // translation of anchor for link to a home page
+        'home': {
+          en: 'Home',
+          ru: 'Главная'
+        },
+        // translation of anchor for link to an about page
+        'about': {
+          en: 'Home',
+          ru: 'Главная'
+        },
+        // translation of anchor for link to a contacts page
+        'contacts': {
+          en: 'Home',
+          ru: 'Главная'
+        },
+        'loginbox': {
+          // ...
+        }
+      }
+    },
+    'footer': {
+      // translations of footer phrases
+    }
+  },
+  'admin': {
+    // translations of administration panel phrases
+  }
+}
+```
 
-## Translations file tutorial
+##### Example of routes config for automatic routes localization
+```js
 
-## Automatic routes localization
+export default {
+    // the parent route
+    '/': {
+        component: SiteLayout
+    },
+    '/admin': {
+        component: AdminLayout
+    }
+})
+ 
+```
 
 
