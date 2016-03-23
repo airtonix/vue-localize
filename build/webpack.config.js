@@ -20,16 +20,15 @@ module.exports = {
       new webpack.BannerPlugin(banner, {raw: true})
   ],
   module: {
-    resolveLoader: {
-      root: path.join(__dirname, 'node_modules')
-    },
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
-          presets: ['es2015']
+          presets: ['es2015'],
+          cacheDirectory: true,
+          plugins: ["lodash"]
         }
       }
     ],
