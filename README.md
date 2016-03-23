@@ -13,10 +13,10 @@
 - Current language is a Vuex state changed only via mutations
 - Saving selected language in local storage
 - Fallback language support
-- Automatic routes localization ```/about ===> /en/about, /ru/about,...``` only with official VueRouter
-- Wrapper for v-link for proper navigation
+- Automatic routes localization: ```/about ===> /en/about, /ru/about,...``` only with official VueRouter
+- Wrapper for route name for using in v-link for proper navigation: ``` v-link="{name: $localizeRoute('about')}" ```
 - Translating page title
-- Route path translation tool
+- Route path translating tool: ``` $translateRoutePath($route.path, $route.name, lang) ```
 - Option for excluding language part from route path for default language
 - Option for custom name of the key in local storage
 - Global mixin for getting current language in Vue components via Vuex getter "currentLanguage"
