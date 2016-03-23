@@ -1,129 +1,61 @@
 import { kebabCase, replace, join, split, each, has, get, set, unset, clone, cloneDeep } from 'lodash'
-import { currentLanguage, routeLocalized } from './getters'
-import Vue from 'vue'
+import { currentLanguage } from './vuex-getters'
 
-Vue.mixin({
-  vuex: {
-    getters: {
-      currentLanguage: currentLanguage,
-      routeLocalized: routeLocalized
-    }
-  }
-})
+// @todo by Saymon: pick out into config
+var localStorageKey = 'currentLanguage'
 
-/**
- * Recursive renaming subrouts
- */
-const _localizeSubroutes = function (subroutes, lang, routesRegistry) {
-  each(subroutes, function (route, path) {
-    if (has(route, 'name')) {
-      set(routesRegistry.initial, route.name, path)
-      route.originalName = route.name
-      route.name = lang + '_' + route.name
-      set(routesRegistry.localized, route.name, lang)
-    }
-
-    if (has(route, 'subRoutes')) {
-      var objSubs = clone(route.subRoutes)
-      unset(route, 'subRoutes')
-
-      var subs = cloneDeep(objSubs)
-      var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
-      route.subRoutes = subroutesLocalized
-    }
-  })
-
-  return subroutes
+function saveLanguageToLocalStorage (lang) {
+  window.localStorage.setItem(localStorageKey, lang)
 }
 
-/**
- * Adding components objects into the routes config
- */
-const _addComponents = function (routes, components) {
-  each(routes, function (route, path) {
-    var componentName = route.component
-    route.component = get(components, componentName)
-
-    if (has(route, 'subRoutes')) {
-      _addComponents(route.subRoutes, components)
-    }
-  })
-
-  return routes
+function getFromLocalStorage () {
+  return window.localStorage.getItem(localStorageKey)
 }
 
+//
+// ******************************************************************
+//                          VUEX STORE MODULE                      //
+// ******************************************************************
+//
+
 /**
- * Localization of routes
- * @todo by Saymon: suspicion that we have different instatnces of the same component when calling clone/cloneDeep
- * if it's true, need to remove component objects before cloning and then map its after
+ * Mutation for switching applcation language
  */
-export const localizeRoutes = function (routes, langConfig, components) {
-  var routesRegistry = { initial: {}, localized: {} }
-  each(routes, function (routeConfig, path) {
-    if (!has(routeConfig, 'localized')) {
-      return
+const SET_APP_LANGUAGE = 'SET_APP_LANGUAGE'
+
+const state = {
+  currentLanguage: null
+}
+
+const mutations = {
+  /**
+   * @state {Object}
+   * @lang {String}
+   */
+  [SET_APP_LANGUAGE] (state, lang, saveToLocalStorage = true) {
+    state.currentLanguage = lang
+    if (saveToLocalStorage) {
+      saveLanguageToLocalStorage(lang)
     }
-
-    if (has(routeConfig, 'name')) {
-      set(routesRegistry.initial, routeConfig.name, path)
-    }
-
-    var objRoute = clone(routeConfig)
-    unset(routes, path)
-
-    if (has(objRoute, 'subRoutes')) {
-      var objSubs = clone(objRoute.subRoutes)
-      unset(objRoute, 'subRoutes')
-    }
-
-    each(langConfig.list, function (config, lang) {
-      if (!config.enabled) {
-        return
-      }
-
-      var newNode = clone(objRoute)
-      var suffix = ''
-      if (path[0] === '/' && path.length === 1) {
-        suffix = ''
-      } else if (path[0] === '/' && path.length > 1) {
-        suffix = path
-      } else if (path[0] !== '/') {
-        suffix = '/' + path
-      }
-
-      var prefix = lang
-      if (langConfig.defaultLanguageRoute === false) {
-        prefix = langConfig.defaultLanguage !== lang ? lang : ''
-      }
-
-      var newPath = '/' + prefix + suffix
-      newNode.lang = lang
-
-      var subs = cloneDeep(objSubs)
-      var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
-      newNode.subRoutes = subroutesLocalized
-      set(routes, newPath, newNode)
-    })
-  })
-
-  /* IF DEBUG
-  console.log(routesRegistry)
-  console.log(JSON.stringify(routes, null, ' '))
-  if (true) {
-    throw new Error()
-  }
-  /* IF DEBUG */
-
-  _addComponents(routes, components)
-
-  return {
-    map: routes,
-    routesRegistry: routesRegistry
   }
 }
 
 /**
- * @Vue     {Object} -
+ * Export Vuex store module
+ */
+export const vueLocalizeVuexStoreModule = {
+  state,
+  mutations
+}
+
+//
+// ******************************************************************
+//                               PLUGIN                            //
+// ******************************************************************
+//
+
+/**
+ * @Vue     {Object} - Vue
  * @options {Object} - plugin options
  */
 function install (Vue, options) {
@@ -132,41 +64,189 @@ function install (Vue, options) {
    * @config          {Object} - config object
    * @routesRegistry  {Object} - registry of a routes (with initial names and localized names)
    */
-  var { store, config, router, routes, components } = options
+  var { store, config, router, routes } = options
   const VARIABLES_REGEXP = /%[a-z]*%/g
   const {
     bind
   } = Vue.util
 
-  const routesMap = localizeRoutes(routes, config, components)
-  const routesRegistry = routesMap.routesRegistry
-
-  router.map(routesMap.map)
-
-  router.beforeEach(function (transition) {
-    const currentLanguage = store.state.vueLocalize.currentLanguage
-    if (transition.to.localized) {
-      /* prevent unnecessary mutation call  */
-      if (currentLanguage !== transition.to.lang) {
-        store.dispatch('SET_APP_LANGUAGE', transition.to.lang, config.resaveOnLocalizedRoutes, 'main.js LOCALIZED')
-      }
-    } else if (transition.from.localized === true && !config.resaveOnLocalizedRoutes) {
-      // Restore memorized language from local storage for not localized routes
-      var localStoredLanguage = window.localStorage.getItem('currentLanguage')
-      if (localStoredLanguage && /* prevent unnecessary mutation call  */ transition.from.lang !== localStoredLanguage) {
-        store.dispatch('SET_APP_LANGUAGE', localStoredLanguage, false, 'main.js NOT LOCALIZED')
+  Vue.mixin({
+    vuex: {
+      getters: {
+        currentLanguage: currentLanguage
       }
     }
-    transition.next()
   })
+
+  store.dispatch('SET_APP_LANGUAGE', config.defaultLanguage, false)
+
+  var idIncrement = 0
+  var routesComponents = {}
+  var routesRegistry = {initial: {}, localized: {}}
 
   /**
    * Returns current selected application language
    * @return {String}
    */
   function _currentLanguage () {
-    return store.state[config.vuexStoreModuleName].currentLanguage
+    return store.state.vueLocalizeVuexStoreModule.currentLanguage
   }
+
+  /**
+   * Recursive renaming subrouts
+   */
+  function _localizeSubroutes (subroutes, lang, routesRegistry) {
+    each(subroutes, function (route, path) {
+      if (has(route, 'name')) {
+        set(routesRegistry.initial, route.name, path)
+        route.originalName = route.name
+        route.name = lang + '_' + route.name
+        set(routesRegistry.localized, route.name, lang)
+      }
+
+      if (has(route, 'subRoutes')) {
+        var objSubs = clone(route.subRoutes)
+        unset(route, 'subRoutes')
+
+        var subs = cloneDeep(objSubs)
+        var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
+        route.subRoutes = subroutesLocalized
+      }
+    })
+
+    return subroutes
+  }
+
+  /**
+   * Recursive action call
+   */
+  function _recursively (object, action, isRoot = true) {
+    each(object, function (value, key) {
+      if (isRoot === true && !has(value, 'localized')) {
+        return
+      }
+
+      action(key, value)
+      if (has(value, 'subRoutes')) {
+        _recursively(value.subRoutes, action, false)
+      }
+    })
+  }
+
+  /**
+   * Assign route id
+   */
+  function _identicateRoutes (path, routeConfig) {
+    set(routeConfig, 'vueLocalizeId', idIncrement)
+    idIncrement++
+  }
+
+  /**
+   * Add component into separate object by previously assigned route id
+   */
+  function _collectComponents (path, routeConfig) {
+    set(routesComponents, routeConfig.vueLocalizeId, {})
+    set(routesComponents[routeConfig.vueLocalizeId], 'component', routeConfig.component)
+  }
+
+  /**
+   * Detach component from route
+   */
+  function _detachComponents (path, routeConfig) {
+    unset(routeConfig, 'component')
+  }
+
+  function _attachComponents (path, routeConfig) {
+    set(routeConfig, 'component', routesComponents[routeConfig.vueLocalizeId].component)
+  }
+
+  /**
+   * Localization of routes
+   */
+  function localizeRoutes (routes, config) {
+    _recursively(routes, _identicateRoutes)
+    _recursively(routes, _collectComponents)
+    _recursively(routes, _detachComponents)
+
+    each(routes, function (routeConfig, path) {
+      if (!has(routeConfig, 'localized')) {
+        return
+      }
+
+      if (has(routeConfig, 'name')) {
+        set(routesRegistry.initial, routeConfig.name, path)
+      }
+
+      var objRoute = clone(routeConfig)
+      unset(routes, path)
+
+      if (has(objRoute, 'subRoutes')) {
+        var objSubs = clone(objRoute.subRoutes)
+        unset(objRoute, 'subRoutes')
+      }
+
+      each(config.list, function (langConfig, lang) {
+        if (!langConfig.enabled) {
+          return
+        }
+
+        var newNode = clone(objRoute)
+        var suffix = ''
+        if (path[0] === '/' && path.length === 1) {
+          suffix = ''
+        } else if (path[0] === '/' && path.length > 1) {
+          suffix = path
+        } else if (path[0] !== '/') {
+          suffix = '/' + path
+        }
+
+        var prefix = lang
+        if (config.defaultLanguageRoute === false) {
+          prefix = config.defaultLanguage !== lang ? lang : ''
+        }
+
+        var newPath = '/' + prefix + suffix
+        newNode.lang = lang
+
+        var subs = cloneDeep(objSubs)
+        var subroutesLocalized = _localizeSubroutes(subs, lang, routesRegistry)
+        newNode.subRoutes = subroutesLocalized
+        set(routes, newPath, newNode)
+      })
+    })
+
+    _recursively(routes, _attachComponents)
+
+    return routes
+  }
+
+  var routesMap = localizeRoutes(routes, config)
+  router.map(routesMap)
+
+  router.beforeEach(function (transition) {
+    if (transition.to.localized) {
+      /* prevent unnecessary mutation call  */
+      if (_currentLanguage() !== transition.to.lang) {
+        store.dispatch('SET_APP_LANGUAGE', transition.to.lang, config.resaveOnLocalizedRoutes)
+      }
+    } else if (transition.from.localized === true && !config.resaveOnLocalizedRoutes) {
+      // Restore memorized language from local storage for not localized routes
+      var localStoredLanguage = getFromLocalStorage()
+      if (localStoredLanguage && /* prevent unnecessary mutation call  */ transition.from.lang !== localStoredLanguage) {
+        store.dispatch('SET_APP_LANGUAGE', localStoredLanguage, false)
+      }
+    }
+
+    transition.next()
+  })
+
+  function init (route) {
+    var initialLanguage = has(route, 'localized') ? route.lang : getFromLocalStorage()
+    if (initialLanguage) {
+      store.dispatch('SET_APP_LANGUAGE', initialLanguage, config.resaveOnLocalizedRoutes)
+    }
+  }
+  Vue.prototype['$vueLocalizeInit'] = init
 
   /**
    * Get the path of a phrase and translates it into the current
@@ -264,8 +344,7 @@ function install (Vue, options) {
   /**
    * Object with VueLocalize config
    */
-  const localizeConf = config
-  Vue.prototype['$localizeConf'] = localizeConf
+  Vue.prototype['$localizeConf'] = config
 
   /**
    * Injects variables values into already translated string by
@@ -323,7 +402,7 @@ function install (Vue, options) {
      */
     bind: function () {
       const vm = this.vm
-      this.unwatch = vm.$watch('$store.state.' + config.vuexStoreModuleName + '.currentLanguage', bind(this.updateContent, this))
+      this.unwatch = vm.$watch('$store.state.vueLocalizeVuexStoreModule.currentLanguage', bind(this.updateContent, this))
     },
 
     /**
