@@ -5,16 +5,15 @@
 ## Important
 You can NOT use this plugin without Vuex
 
-You can NOT use this plugin without VueRouter, but it will be possible in the next versions (newer than 1.0.2).
+You can NOT use this plugin without VueRouter, however it will be possible in the next versions (newer than 1.0.2).
 
 ## Lnks
 
-- Webpack
-- VueRouter
-- Vuex
+- [VueRouter](http://vuejs.github.io/vue-router/en/index.html)
+- [Vuex](http://vuex.vuejs.org/en/index.html)
 
 ## Functionality and features
-- Easy integration in your application in just two places
+- Easy integration in your application
 - Current language is a Vuex state changed only via mutations
 - Saving selected language in local storage
 - Fallback language support
@@ -28,7 +27,7 @@ You can NOT use this plugin without VueRouter, but it will be possible in the ne
 - Translating phrases via Vue filter: ```{{ phrase | translate }}```
 - Translating phrases via direct call of plugin method: ``` {{ $translate(phrase) }} or v-text="$translate(phrase)" ```
 - Translating phrases via Vue directive: ``` v-localize="{path: 'header.nav.home'}" ```
-- Injection of custom variables into translations: ``` {{ $translate(phrase, objVars) }} ```
+- Injection custom variables into translations: ``` {{ $translate(phrase, objVars) }} ```
 - Translating to exact language regardless of current selected: ``` {{ $translate(phrase, null, 'en') }} ```
 - Reactive UI translating via language selector
 - Flexible context-based translations structure
@@ -45,16 +44,19 @@ $ npm install vue-localize --save
 
 ## Integration
 To use full set of VueLocalize features you need to do following simple steps:
-- Integrate plugin in 2 places
-- create and adjust the configuration file
-- create file with translations
-- add option ```localized: true``` into root-level routes, which need to become internationalized
+- Integrate plugin
+  - Import and register plugin
+  - Add Vuex store module
+  - Setup initial states
+- Create and adjust the configuration file
+- Create file with translations
+- Add option ```localized: true``` into root-level routes, which need to become internationalized
 
-### Integration in 2 places
+### Integration
 
 > Full-featured example of integration in app with Vuex and VueRouter.
 
-#### Place 1. Importing and registering VueLocalize plugin
+#### Importing and registering VueLocalize plugin
 > In your entry point (usually it's index.js or main.js)
 
 ```js
@@ -95,12 +97,12 @@ router.start(App, '#app')
 Pay attention (!) there is no line with ```router.map(routes)```.
 When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use it already transformed. So this line of code is built into the plugin.
 
-#### Place 2. Adding Vuex store module
+#### Adding Vuex store module
 
 > Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so.
 Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
 
-So code for your store.js
+Code for your store.js
 ```js
 import Vuex from 'vuex'
 import Vue from 'vue'
@@ -115,6 +117,27 @@ export default new Vuex.Store({
     // other Vuex modules
   }
 })
+```
+
+#### Setting initial state
+You can't know in advance, what exact route can initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or remembed in local storage if there is no language part in route (e.g. in administrative section), or the default one.
+
+And there is the global plugin method ```$vueLocalizeInit($route)``` for this purpose. It's just a function which get a route object as attribute.
+
+We recommend to call this method on ready hook of the root Vue instance, which was passed in ```router.start()```
+In our example it's the App.vue component.
+```js
+<script>
+import store from '../vuex/store'
+export default {
+  // injecting Vuex store into the root Vue instance
+  store,
+  ready: function () {
+    this.$vueLocalizeInit(this.$route)
+  }
+}
+</script>
+
 ```
 
 #### Config file
