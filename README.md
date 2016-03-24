@@ -67,7 +67,7 @@ var router = new VueRouter({
   // your set of options
 })
 
-// Import routes config obejct
+// Import router config obejct
 import routes from './config/routes'
 
 // Import plugin config
@@ -93,7 +93,7 @@ import App from './App'
 router.start(App, '#app')
 ```
 Pay attention (!) there is no line with ```router.map(routes)``` in the code above.
-When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use it already transformed. So this line of code is built into the plugin. More detailed explanation below.
+When using automatic routes localization, VueLocalize will transform your initial router config and VueRouter will use it already transformed. So this line of code is built into the plugin. More detailed explanation below.
 
 #### Adding Vuex store module
 
@@ -257,7 +257,7 @@ So path to the any node which is not contains leafs is a context, each node whic
 #### Global context
 Global context is the root-level key, defined in the corresponding option of the VueLocalize configuration file. The feature of the global context is that you don't need include its name in the path which passing into translation method/filter/directive. E.g. to translate phrase with path ```global.project-name``` you can write just ```{{ 'project-name' | translate }}``` instead of full path ```global.project-name```.
 
-## Example of routes config for automatic routes localization
+## Router config for automatic routes localization
 > Example below assumes an application of a website, that consists of the public and administrative sections and assumes that the public section should working with localized routes paths and the administrative section shouldn't.
 
 ```js
@@ -302,7 +302,7 @@ Pay attention to the ```localized: true``` option of the parent route for public
 
 What will happen?
 
-If use the above described routes config as is, we'll have the following paths of public section:
+If use the above described router config as is, we'll have the following paths of public section:
 ```
 yourdomain.com/
 yourdomain.com/about
@@ -336,7 +336,7 @@ yourdomain.com/ru
 yourdomain.com/ru/about
 yourdomain.com/ru/contacts
 ```
-And the dump of the transformed routes config below helps to understand better what will happen with initial routes config and how exactly it will be transformed.
+And the dump of the transformed router config below helps to understand better what will happen with initial router config and how exactly it will be transformed.
 ```js
 export default {
     '/en': {
@@ -573,7 +573,7 @@ or
 
 
 - **$localizeRoute(name, [lang = null])** - method for routes names wrapping for proper navigation.
-  - **name** - (required) - initial name of a route as defined in your routes config
+  - **name** - (required) - initial name of a route as defined in your router config
 
 
 - **$translateRoutePath(path, name, lang)** - method for translating path of the current route to another language.
