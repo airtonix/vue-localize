@@ -466,17 +466,21 @@ Translating into exact language, e.g. English
 ## API
 VueLocalize provides some global methods, one global property, one global mixin, one filter, one directive and one mutation for switching languages
 
-#### Global properties and methods
+### Global properties and methods
 - $localizeConf
-- $translate()
-- $vueLocalizeInit
-- $localizeRoute
-- $translateRoutePath
-#### Filters
+- $translate(path, [vars] = null, [lang] = null)
+- $vueLocalizeInit($route)
+- $localizeRoute(name, [lang = null])
+- $translateRoutePath(path, name, lang)
+
+### Filters
 - translate
-#### Directives
+
+### Directives
 - v-localize
-#### Mixins
+
+### Mixins
 - currentLanguage
-#### Mutations
+
+### Mutations
 - 'SET_APP_LANGUAGE'
