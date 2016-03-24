@@ -173,13 +173,22 @@ export default {
 - **languages** - The list of application languages. It's just a json object. The key of each root node is a language code. Each node is a configuration of the exact language and should contains two options:
   - **key** - phrase key in the translation file for translating language name into different languages, e.g. for using when render items in language selector
   - **enabled** - set to false if need to disable language, or true to enable
+
+
 - **defaultLanguage** - Default language will be used if the language nowhere defined (together in current route, Vuex store and localStorage). Usually it works if user came for the first time
+
+
 - **translations** - The object with translations of application phrases
+
 - **defaultLanguageRoute** - Defines the behaviour of routes localization (adding language at the start of path of a routes). If false, disable leading language param for all routes with default language, or enable otherwise
 - **resaveOnLocalizedRoutes** - Defines the policy for storing selected language in browser local storage for transiotions from localized routes to not localized and backwards. If false, transition from NOT localized route to localized will not update selected language in local storage, and it will be taken up when you'll back TO NOT localized route FROM LOCALIZED, even you have switched languages with language selector. It can be useful in cases when you need to remember the language selected in user account or administrative panel and switching languages at the public section of a site should not affect this choice. Set to true if you need transparent behaviour of application when switching languages and language must be changed for all application regargless of where exactly it was switched, in administration panel or at the public section of a site.
+
 - **defaultContextName** - Name of the key for default context of translations
+
 - **fallbackOnNoTranslation** - Set to true if you want to translate phrases which has no translation into the language defined in the option "fallbackLanguage" below. It may be usefull when you already need to publish your app, but you have no complete translations into all languages for all phrases.
+
 - **fallbackLanguage** - Defines the fallback language for using in case described in comment for the option above
+
 - **supressWarnings** - Suppress warnings emitted into browser console (concerns only translation process). Plugin can emit warnings during translation phrases process in the following cases:
   - phrase path doesn't exists in localization file (emitted always)
   - phrase path exists but there is no translation into current language (emitted only if "fallbackOnNoTranslation" is set to false)
@@ -555,24 +564,26 @@ or
 ### Global properties and methods
 - **$localizeConf** - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file. So you can access your config in your Vue component just via ```this.$localizeConf``` in models or via ```$localizeConf``` in templates.
 
+
 - **$translate(path, [vars] = null, [lang] = null)** - global function for translating phrases
-  
   - **path** - (required) - the path to key of a phrase in the json object with translations
-  
   - **vars** - (optional) - variables to inject into the complete translation
-  
-  - **lang** - (optional) - exact translation language 
+  - **lang** - (optional) - exact translation language
+
 
 - **$vueLocalizeInit($route)** - method for initialization Vuex state (current language) on page loading/reloading. Detailed explanation describet slightly above in [Setting initial state](#setting-initial-state)
   - **$route** - (required) - route object
 
+
 - **$localizeRoute(name, [lang = null])** - method for routes names wrapping for proper navigation.
   - **name** - (required) - initial name of a route as defined in your routes config
+
 
 - **$translateRoutePath(path, name, lang)** - method for translating path of the current route to another language.
   - **path** - (required) - path of the route
   - **name** - (required) - name of the route
   - **lang** - (optional) - exact language (using current selected by default)
+
 
 ### Filters
 - **translate**
