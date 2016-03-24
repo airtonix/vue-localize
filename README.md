@@ -437,21 +437,21 @@ export default {
 ```
 The example above uses the following features:
 - ```$localizeConf``` - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file
-- ```currentLanguage```` - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
+- ```currentLanguage``` - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
 - ```$translateRoutePath()``` - global method of the VueLocalize plugin for translating path of the route to another language
 - ```this.$store.dispatch('SET_APP_LANGUAGE', code)``` - dispatch the mutation
 
 Read more about these features in the "API" section below.
-Pay attention that in the example above we dispatch mutation only for non localized routes, but if route has flag ```localized: true``` we perform ```router.go``` and in this case mutation will be dispatched automatically inside the VueLocalize plugin
+Pay attention that in the example above we dispatch mutation only for non localized routes, but if route has flag ```localized: true``` we perform ```router.go()``` and in this case mutation will be dispatched automatically inside the VueLocalize plugin
 
 ## Usage
 
 ### Translating
 
 VueLocalize provides three ways for translating phrases:
-- via Vue filter
-- via direct call of the plugin method
-- via Vue directive ```v-localize```
+- via **Vue filter**
+- via **direct call** of the plugin method
+- via **Vue directive** ```v-localize```
 
 Ultimately in all these cases translation will be performed by the same internal mechanism of the plugin, which is just a function with following three arguments: ```(path, [vars], [lang])```
 
@@ -499,7 +499,55 @@ Translating into exact language, e.g. English
 <span v-localize="{path: 'site.header.nav.home', lang: 'en'}"></span>
 ```
 
-#### Injection custom variables into complete translation
+### Injection custom variables into complete translation
+
+Lets define some variables just for example
+```js
+export default {
+  data () {
+    return {
+      vars: {
+        '%foo%': 'Foo',
+        '%bar%': 'Bar'
+      }
+    }
+  }
+}
+```
+and add the example phrase with translations into the global context:
+```js
+export default {
+  // global context
+  'global': {
+    'project-name': {
+      en: 'Name of the project in English',
+      ru: 'Название проекта на Русском'
+    },
+    'injection-test': { // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< our phrase for injection test
+      en: 'Some string in English contains %foo% and only then %bar%',
+      ru: 'Перевод фразы на русский, содержащий наоборот сначала %bar% и только потом %foo%'
+    }
+  },
+  // ....
+}
+```
+
+#### Injecting with Vue filter
+```html
+{{ 'injection-test' | translate vars }}
+```
+#### Injecting with direct call
+```html
+{{ $translate('injection-test', vars) }}
+```
+or
+```html
+<span v-text="$translate('injection-test', vars)"></span>
+```
+#### Injecting with directive
+```html
+<span v-localize="{path: 'injection-test', vars: vars}"></span>
+```
 
 ## API
 VueLocalize provides some global methods, one global property, one global mixin, one filter, one directive and one mutation for switching languages
