@@ -86,7 +86,7 @@ import App from './App'
 router.start(App, '#app')
 ```
 Pay attention (!) there is no line with ```router.map(routes)```.
-When using automatic routes localization, plugin will rebiulds your initial routes config and VueRouter will use already  rebuilded by VueLocalize routes config. So it's built into the plugin
+When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use already transformed config. So this code is built into the plugin.
 
 ##### Adding Vuex store module
 
@@ -131,7 +131,7 @@ export default {
   },
   defaultLanguage: 'en',
   translations: translations,
-  defaultLanguageRoute: false,
+  defaultLanguageRoute: true,
   resaveOnLocalizedRoutes: false,
   defaultContextName: 'global',
   fallbackOnNoTranslation: false,
@@ -197,18 +197,145 @@ export default {
 ```
 
 ##### Example of routes config for automatic routes localization
+> Example below assumes application of a website, that consists of the public and administrative sections and the public section should working with localized routes paths, but the administrative section shouldn't.
+
 ```js
+import SiteLayout from './components/SiteLayout'
+import HomePage from './components/HomePage'
+import SiteLayout from './components/AboutPage'
+import SiteLayout from './components/ContactsPage'
+import SiteLayout from './components/AdminLayout'
+// ... importing other components
 
 export default {
-    // the parent route
+    // the parent route for public section of your application
     '/': {
-        component: SiteLayout
+      // the only thing you have to add for localize this route and all nested routes recursively
+      localized: true,
+      component: SiteLayout,
+      subRoutes: {
+        '/': {
+          name: 'home-page',
+          component: 'HomePage'
+        },
+        '/about': {
+          name: 'about-page',
+          component: 'AboutPage'
+        },
+        '/contacts': {
+          name: 'contacts-page',
+          component: 'ContactsPage'
+        },
+      }
     },
     '/admin': {
         component: AdminLayout
+        subRoutes: {
+          // administration area subroutes
+        }
     }
 })
  
 ```
+Pay attention to the ```localized: true``` option in the parent route for public section of application. This is really only thing you have to add to internationalize path of this and all nested routes recursively. And you have to add this option only into a parent (root) routes and no into any sub routes.
+
+What will happen?
+
+If use the above described routes config, we'll have the following paths of public section:
+```
+yourdomain.com/
+yourdomain.com/about
+yourdomain.com/contacts
+```
+
+VueLocalize will transform initial config automatically and in the end we'll have the following set of paths:
+
+```
+yourdomain.com/en
+yourdomain.com/en/about
+yourdomain.com/en/contacts
+yourdomain.com/ru
+yourdomain.com/ru/about
+yourdomain.com/ru/contacts
+```
+
+Transitions between routes e.g. ```yourdomain.com/en/about``` and ```yourdomain.com/ru/about``` (when switching languages with language selector) will reuse the same component. So if you have any data at the page (in the component binded to the current route), and the switching to another language, data will not be affected despite the fact that the route has been actually changed. VueLocalize simply performs reactive translation of all the phrases at the page.
+
+Note that it's easy to exclude leading language part from routes for default language if needed.
+E.g. English defined as default application language, so only thing we have to do for - set to ```false``` ```defaultLanguageRoute``` option in the config. Then we'll have the following set of paths:
+
+```
+yourdomain.com/
+yourdomain.com/about
+yourdomain.com/contacts
+yourdomain.com/ru
+yourdomain.com/ru/about
+yourdomain.com/ru/contacts
+```
+And the dump of the transformed routes config below helps to understand better what will happen with initial routes config and how exactly it will be transformed.
+```js
+export default {
+    '/en': {
+      localized: true,
+      lang: 'en',
+      component: SiteLayout,
+      subRoutes: {
+        '/': {
+          name: 'en_home-page',
+          component: 'HomePage'
+        },
+        '/about': {
+          name: 'en_about-page',
+          component: 'AboutPage'
+        },
+        '/contacts': {
+          name: 'en_contacts-page',
+          component: 'ContactsPage'
+        },
+      }
+    },
+    '/ru': {
+      localized: true,
+      lang: 'ru',
+      component: SiteLayout,
+      subRoutes: {
+        '/': {
+          name: 'ru_home-page',
+          component: 'HomePage'
+        },
+        '/about': {
+          name: 'ru_about-page',
+          component: 'AboutPage'
+        },
+        '/contacts': {
+          name: 'ru_contacts-page',
+          component: 'ContactsPage'
+        },
+      }
+    },
+    '/admin': {
+        component: AdminLayout
+        subRoutes: {
+          // ...
+        }
+    }
+})
+```
+As you can see
+- root-level routes (only which have ```localized: true ``` option) will be cloned from initial one recursively
+- leading parts with language codes will be added into the paths of root-level routes
+- names for all sub routes will be changed recursively by adding prefixes with language code
+- option ```lang``` with language code in value will be added into root-level routes only
+
+There is two important things you should consider when working with plugin:
+- option ```lang``` added into the root-level routes. Just keep it in mind.
+- changed names of the routes. And there is the special global method of the VueLocalize plugin for wrapping initial route name in ```v-link``` directive.
+
+To implement navigation for multilingual routes with VueLocalize, just do the following:
+```html
+<a v-link="{name: $localizeRoute('about')}"></a>
+```
+Method ```$localizeRoute()``` works only with names of routes, but not with paths, so routes used in navigation links should be named. And don't use unnamed routes / sub-routes to avoid unexpected behaviour. This case (using unnamed routes with this plugin) is not tested yet.
+
 
 
