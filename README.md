@@ -526,7 +526,8 @@ export default {
     'injection-test': { // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< our phrase for injection test
       en: 'Some string in English contains %foo% and only then %bar%',
       ru: 'Перевод фразы на русский, содержащий наоборот сначала %bar% и только потом %foo%'
-    }
+    },
+    // ...
   },
   // ....
 }
@@ -550,23 +551,47 @@ or
 ```
 
 ## API
-VueLocalize provides some global methods, one global property, one global mixin, one filter, one directive and one mutation for switching languages
 
 ### Global properties and methods
-- $localizeConf
-- $translate(path, [vars] = null, [lang] = null)
-- $vueLocalizeInit($route)
-- $localizeRoute(name, [lang = null])
-- $translateRoutePath(path, name, lang)
+- **$localizeConf** - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file. So you can access your config in your Vue component just via ```this.$localizeConf``` in models or via ```$localizeConf``` in templates.
+
+- **$translate(path, [vars] = null, [lang] = null)** - global function for translating phrases
+  
+  - **path** - (required) - the path to key of a phrase in the json object with translations
+  
+  - **vars** - (optional) - variables to inject into the complete translation
+  
+  - **lang** - (optional) - exact translation language 
+
+- **$vueLocalizeInit($route)** - method for initialization Vuex state (current language) on page loading/reloading. Detailed explanation describet slightly above in [Setting initial state](#setting-initial-state)
+  - **$route** - (required) - route object
+
+- **$localizeRoute(name, [lang = null])** - method for routes names wrapping for proper navigation.
+  - **name** - (required) - initial name of a route as defined in your routes config
+
+- **$translateRoutePath(path, name, lang)** - method for translating path of the current route to another language.
+  - **path** - (required) - path of the route
+  - **name** - (required) - name of the route
+  - **lang** - (optional) - exact language (using current selected by default)
 
 ### Filters
-- translate
+- **translate**
 
 ### Directives
-- v-localize
+- **v-localize**
 
 ### Mixins
-- currentLanguage
+- **currentLanguage** - VueLocalize provides the global mixin for getting current selected language in your Vue components. Mixin is global so will be injected into **each Vue instance**
 
 ### Mutations
-- 'SET_APP_LANGUAGE'
+- 'SET_APP_LANGUAGE' - VueLocalize contains built-in Vuex submodule, which provides mutation ```SET_APP_LANGUAGE``` to performing language changing. Only you have to do for change the language from some method of your Vue components - dispatch the mutation. E.g.:
+```js
+//...
+methods: {
+  setLanguage: function (language) {
+    this.$store.dispatch('SET_APP_LANGUAGE', language)
+  }
+},
+//...
+
+```
