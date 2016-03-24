@@ -316,7 +316,10 @@ function install (Vue, options) {
   }
   Vue.prototype['$localizeRoute'] = localizeRoute
 
-  function translateRoutePath (path, name, newLang) {
+  function localizeRoutePath (route, newLang) {
+    var path = route.path
+    var name = route.name
+
     if (!has(routesRegistry.initial, name) && !has(routesRegistry.localized, name)) {
       return path
     }
