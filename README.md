@@ -43,6 +43,8 @@ $ npm install vue-localize --save
 ```
 
 ## Integration
+> Full-featured example of integration in app with Vuex and VueRouter.
+
 To use full set of VueLocalize features you need to do following simple steps:
 - Integrate plugin
   - Import and register plugin
@@ -51,10 +53,6 @@ To use full set of VueLocalize features you need to do following simple steps:
 - Create and adjust the configuration file
 - Create file with translations
 - Add option ```localized: true``` into root-level routes, which need to become internationalized
-
-### Integration
-
-> Full-featured example of integration in app with Vuex and VueRouter.
 
 #### Importing and registering VueLocalize plugin
 > In your entry point (usually it's index.js or main.js)
@@ -140,7 +138,7 @@ export default {
 
 ```
 
-#### Config file
+## Config file
 
 ```js
 import translations from './vue-localize-translations'
@@ -194,7 +192,7 @@ export default {
   - phrase path exists, hasn't translation into current language and hasn't translation into fallback language (emitted only if "fallbackOnNoTranslation" is set to true)
   - output translation contains unprocessed variables which will shown to user  as is, e.g. %foo%
 
-#### Translations file structure, contextes and global context
+## Translations file structure, contextes and global context
 
 Translations structure is just a json object, so you can to structure translations as you want.
 
@@ -259,7 +257,7 @@ So path to the any node which is not contains leafs is a context, each node whic
 #### Global context
 Global context is the root-level key, defined in the corresponding option of the VueLocalize configuration file. The feature of the global context is that you don't need include its name in the path which passing into translation method/filter/directive. E.g. to translate phrase with path ```global.project-name``` you can write just ```{{ 'project-name' | translate }}``` instead of full path ```global.project-name```.
 
-#### Example of routes config for automatic routes localization
+## Example of routes config for automatic routes localization
 > Example below assumes an application of a website, that consists of the public and administrative sections and assumes that the public section should working with localized routes paths and the administrative section shouldn't.
 
 ```js
@@ -454,7 +452,7 @@ Pay attention that in the example above we dispatch mutation only for non locali
 
 ## Usage
 
-### Translating
+#### Translating
 
 VueLocalize provides three ways for translating phrases:
 - via **Vue filter**
@@ -507,7 +505,7 @@ Translating into exact language, e.g. English
 <span v-localize="{path: 'site.header.nav.home', lang: 'en'}"></span>
 ```
 
-### Injection custom variables into complete translation
+## Injection custom variables into complete translation
 
 Lets define some variables just for example
 ```js
@@ -558,7 +556,7 @@ or
 <span v-localize="{path: 'injection-test', vars: vars}"></span>
 ```
 
-## API
+# API
 
 ### Global properties and methods
 - **$localizeConf** - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file. So you can access your config in your Vue component just via ```this.$localizeConf``` in models or via ```$localizeConf``` in templates.
