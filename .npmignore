@@ -1,2 +1,5 @@
 build/
 src/
+node_modules/
+.gitignore
+.babelrc

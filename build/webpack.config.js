@@ -9,6 +9,7 @@ var banner =
     " */\n";
 
 module.exports = {
+  devtool: 'cheap-module-source-map',
   entry: "./src/vue-localize",
   output: {
       path: "./dist",
@@ -17,19 +18,23 @@ module.exports = {
       libraryTarget: "umd"
   },
   plugins: [
-      new webpack.BannerPlugin(banner, {raw: true})
+      new webpack.BannerPlugin(banner, {raw: true}),
+      new webpack.DefinePlugin({
+        'process.env': {
+          'NODE_ENV': JSON.stringify('production')
+        }
+      })
   ],
   module: {
-    resolveLoader: {
-      root: path.join(__dirname, 'node_modules')
-    },
     loaders: [
       {
         test: /\.js$/,
-        loader: 'babel',
+        loader: 'babel-loader',
         exclude: /node_modules/,
         query: {
-          presets: ['es2015']
+          presets: ['es2015'],
+          cacheDirectory: true,
+          plugins: ["lodash"]
         }
       }
     ],
