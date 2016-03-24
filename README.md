@@ -5,7 +5,7 @@
 ## Important
 You can NOT use this plugin without Vuex
 
-You can NOT use this plugin without VueRouter, however it will be possible in the next versions (newer than 1.0.2).
+You can NOT use this plugin without VueRouter, however it will be possible in the next versions (newer than 1.0.3).
 
 ## Links
 
