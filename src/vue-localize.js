@@ -185,7 +185,7 @@ function install (Vue, options) {
         unset(objRoute, 'subRoutes')
       }
 
-      each(config.list, function (langConfig, lang) {
+      each(config.languages, function (langConfig, lang) {
         if (!langConfig.enabled) {
           return
         }
