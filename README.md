@@ -5,7 +5,7 @@
 ## Important
 You can NOT use this plugin without Vuex
 
-You CAN use this plugin without VueRouter
+You can NOT use this plugin without VueRouter, but it will be possible in the next versions (newer than 1.0.2).
 
 ## Lnks
 
@@ -43,12 +43,12 @@ In your project folder (where is package.json)
 $ npm install vue-localize --save
 ```
 
-## Integration
+## Integration in 2 places
 
 Full-featured example of integration in app with Vuex and VueRouter
 
-##### Importing and registering VueLocalize plugin
-> In your entry point (usually index.js or main.js)
+##### Place 1. Importing and registering VueLocalize plugin
+> In your entry point (usually it's index.js or main.js)
 
 ```js
 import Vue from 'vue'
@@ -72,23 +72,23 @@ import store from './vuex/store'
 // Import VueLocalize plugin
 import VueLocalize from 'vue-localize'
 
-Vue.use(VueLocalize, {
+Vue.use(VueLocalize, {// All four options is required
   store,
   config: vlConfig,
   router: router,
   routes: routes
 })
 
-// Import App component - root Vue instance
+// Import App component - root Vue instance for application
 import App from './App'
 
 // Application start
 router.start(App, '#app')
 ```
 Pay attention (!) there is no line with ```router.map(routes)```.
-When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use already transformed config. So this code is built into the plugin.
+When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use it already transformed. So this line of code is built into the plugin.
 
-##### Adding Vuex store module
+##### Place 2. Adding Vuex store module
 
 > Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so.
 Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
@@ -110,7 +110,7 @@ export default new Vuex.Store({
 })
 ```
 
-##### Config file
+#### Config file
 
 ```js
 import translations from './vue-localize-translations'
@@ -139,11 +139,11 @@ export default {
   supressWarnings: false
 }
 ```
-#####Options description
+#### Options description
 ...
 ...
 
-##### Translations file example
+#### Translations file example
 ```js
 export default {
   // global context
@@ -196,8 +196,8 @@ export default {
 }
 ```
 
-##### Example of routes config for automatic routes localization
-> Example below assumes application of a website, that consists of the public and administrative sections and the public section should working with localized routes paths, but the administrative section shouldn't.
+#### Example of routes config for automatic routes localization
+> Example below assumes an application of a website, that consists of the public and administrative sections and assumes that the public section should working with localized routes paths and the administrative section shouldn't.
 
 ```js
 import SiteLayout from './components/SiteLayout'
@@ -210,7 +210,7 @@ import SiteLayout from './components/AdminLayout'
 export default {
     // the parent route for public section of your application
     '/': {
-      // the only thing you have to add for localize this route and all nested routes recursively
+      // (!!!) the only thing you have to add for localize this route and all nested routes recursively
       localized: true,
       component: SiteLayout,
       subRoutes: {
@@ -237,11 +237,11 @@ export default {
 })
  
 ```
-Pay attention to the ```localized: true``` option in the parent route for public section of application. This is really only thing you have to add to internationalize path of this and all nested routes recursively. And you have to add this option only into a parent (root) routes and no into any sub routes.
+Pay attention to the ```localized: true``` option of the parent route for public section of application. This is really only thing you have to add to internationalize path of this and all nested routes recursively. And you have to add this option only into a parent (root-level) routes and no into any sub routes.
 
 What will happen?
 
-If use the above described routes config, we'll have the following paths of public section:
+If use the above described routes config as is, we'll have the following paths of public section:
 ```
 yourdomain.com/
 yourdomain.com/about
@@ -259,10 +259,11 @@ yourdomain.com/ru/about
 yourdomain.com/ru/contacts
 ```
 
-Transitions between routes e.g. ```yourdomain.com/en/about``` and ```yourdomain.com/ru/about``` (when switching languages with language selector) will reuse the same component. So if you have any data at the page (in the component binded to the current route), and the switching to another language, data will not be affected despite the fact that the route has been actually changed. VueLocalize simply performs reactive translation of all the phrases at the page.
+Transitions between routes e.g. ```yourdomain.com/en/about``` and ```yourdomain.com/ru/about``` (when switching languages via language selector) will reuse the same component. So if you have any data at the page (in the component binded to the current route), and the switching to another language, data will not be affected despite the fact that the route has been actually changed. VueLocalize simply performs reactive translation of all the phrases at the page.
 
+###### Excluding leading language part from routes for default language
 Note that it's easy to exclude leading language part from routes for default language if needed.
-E.g. English defined as default application language, so only thing we have to do for - set to ```false``` ```defaultLanguageRoute``` option in the config. Then we'll have the following set of paths:
+E.g. English is defined as default application language, so only thing we have to do for - set to ```false``` ```defaultLanguageRoute``` option in the config. Then we'll have the following set of paths:
 
 ```
 yourdomain.com/
@@ -327,15 +328,13 @@ As you can see
 - names for all sub routes will be changed recursively by adding prefixes with language code
 - option ```lang``` with language code in value will be added into root-level routes only
 
-There is two important things you should consider when working with plugin:
+There is two important things you should consider when using this plugin:
 - option ```lang``` added into the root-level routes. Just keep it in mind.
-- changed names of the routes. And there is the special global method of the VueLocalize plugin for wrapping initial route name in ```v-link``` directive.
-
-To implement navigation for multilingual routes with VueLocalize, just do the following:
+- changing names of the routes. And there is the special global method of the VueLocalize plugin for wrapping initial route name in ```v-link``` directive. To implement navigation for multilingual routes with VueLocalize, just do the following:
 ```html
 <a v-link="{name: $localizeRoute('about')}"></a>
 ```
-Method ```$localizeRoute()``` works only with names of routes, but not with paths, so routes used in navigation links should be named. And don't use unnamed routes / sub-routes to avoid unexpected behaviour. This case (using unnamed routes with this plugin) is not tested yet.
+Method ```$localizeRoute()``` works only with names of routes, but not with paths, so routes used in navigation links should be named. And, please, don't use unnamed routes / sub-routes to avoid unexpected behaviour. This case (using unnamed routes with this plugin) is not tested yet.
 
 
 
