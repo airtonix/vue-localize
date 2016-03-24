@@ -20,7 +20,7 @@ You can NOT use this plugin without VueRouter, however it will be possible in th
 - Automatic routes localization (adding leading language part into routes paths): ```/about ===> /en/about, /ru/about,...``` (only with official VueRouter)
 - Wrapper for route name for using in v-link for proper navigation: ``` v-link="{name: $localizeRoute('about')}" ```
 - Translating page title
-- Route path translating tool: ``` $translateRoutePath($route.path, $route.name, lang) ```
+- Route path translating: ``` $translateRoutePath($route.path, $route.name, lang) ```
 - Option for excluding language part from route path for default language
 - Option for custom name of the key in local storage
 - Global mixin for getting current language in Vue components via Vuex getter "currentLanguage"
@@ -28,7 +28,7 @@ You can NOT use this plugin without VueRouter, however it will be possible in th
 - Translating phrases via direct call of plugin method: ``` {{ $translate(phrase) }} or v-text="$translate(phrase)" ```
 - Translating phrases via Vue directive: ``` v-localize="{path: 'header.nav.home'}" ```
 - Injection custom variables into translations: ``` {{ $translate(phrase, objVars) }} ```
-- Translating to exact language regardless of current selected: ``` {{ $translate(phrase, null, 'en') }} ```
+- Translating into exact language regardless of current selected: ``` {{ $translate(phrase, null, 'en') }} ```
 - Reactive UI translating via language selector
 - Flexible context-based translations structure
 - Language selector inplementation tutorial
@@ -47,7 +47,7 @@ To use full set of VueLocalize features you need to do following simple steps:
 - Integrate plugin
   - Import and register plugin
   - Add Vuex store module
-  - Setup initial states
+  - Setup initial state
 - Create and adjust the configuration file
 - Create file with translations
 - Add option ```localized: true``` into root-level routes, which need to become internationalized
@@ -81,25 +81,25 @@ import store from './vuex/store'
 // Import VueLocalize plugin
 import VueLocalize from 'vue-localize'
 
-Vue.use(VueLocalize, {// All four options is required
+Vue.use(VueLocalize, {// All options is required
   store,
   config: vlConfig,
   router: router,
   routes: routes
 })
 
-// Import App component - root Vue instance for application
+// Import App component - root Vue instance of application
 import App from './App'
 
 // Application start
 router.start(App, '#app')
 ```
-Pay attention (!) there is no line with ```router.map(routes)```.
-When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use it already transformed. So this line of code is built into the plugin.
+Pay attention (!) there is no line with ```router.map(routes)``` in the code above.
+When using automatic routes localization, VueLocalize will transform your initial routes config and VueRouter will use it already transformed. So this line of code is built into the plugin. More detailed explanation below.
 
 #### Adding Vuex store module
 
-> Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so.
+> Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so. How how to split state and mutations into sub modules explaned here [http://vuex.vuejs.org/en/structure.html](http://vuex.vuejs.org/en/structure.html) 
 Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
 
 Code for your store.js
@@ -120,11 +120,11 @@ export default new Vuex.Store({
 ```
 
 #### Setting initial state
-You can't know in advance, what exact route can initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or remembed in local storage if there is no language part in route (e.g. in administrative section), or the default one.
+You can't know in advance, what exact route can initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or saved in local storage if there is no language part in route (e.g. in administrative section), or the default language.
 
-And there is the global plugin method ```$vueLocalizeInit($route)``` for this purpose. It's just a function which get a route object as attribute.
+And there is the global method ```$vueLocalizeInit($route)``` for this purpose. It's just a function which getting a route object as attribute.
 
-We recommend to call this method on ready hook of the root Vue instance, which was passed in ```router.start()```
+We recommend place the call of this method on ready hook of the root Vue instance, which was passed in ```router.start()```
 In our example it's the App.vue component.
 ```js
 <script>
@@ -145,7 +145,7 @@ export default {
 ```js
 import translations from './vue-localize-translations'
 export default {
-  list: {
+  languages: {
     en: {
       key: 'eng',
       enabled: true
@@ -170,12 +170,25 @@ export default {
 }
 ```
 #### Options explanation
-...
-...
+- *languages* - The list of application languages. It's just a json object. The key of each root node is a language code. Each node is a configuration of the exact language and should contains two options:
+  - *key* - phrase key in the translation file for translating language name into different languages, e.g. for using when render items in language selector
+  - *enabled* - set to false if need to disable language, or true to enable
+- *defaultLanguage* - Default language will be used if the language nowhere defined (together in current route, Vuex store and localStorage). Usually it works if user came for the first time
+- *translations* - The object with translations of application phrases
+- *defaultLanguageRoute* - Defines the behaviour of routes localization (adding language at the start of path of a routes). If false, disable leading language param for all routes with default language, or enable otherwise
+- *resaveOnLocalizedRoutes* - Defines the policy for storing selected language in browser local storage for transiotions from localized routes to not localized and backwards. If false, transition from NOT localized route to localized will not update selected language in local storage, and it will be taken up when you'll back TO NOT localized route FROM LOCALIZED, even you have switched languages with language selector. It can be useful in cases when you need to remember the language selected in user account or administrative panel and switching languages at the public section of a site should not affect this choice. Set to true if you need transparent behaviour of application when switching languages and language must be changed for all application regargless of where exactly it was switched, in administration panel or at the public section of a site.
+- *defaultContextName* - Name of the key for default context of translations
+- *fallbackOnNoTranslation* - Set to true if you want to translate phrases which has no translation into the language defined in the option "fallbackLanguage" below. It may be usefull when you already need to publish your app, but you have no complete translations into all languages for all phrases.
+- *fallbackLanguage* - Defines the fallback language for using in case described in comment for the option above
+- *supressWarnings* - Suppress warnings emitted into browser console (concerns only translation process). Plugin can emit warnings during translation phrases process in the following cases:
+  - phrase path doesn't exists in localization file (emitted always)
+  - phrase path exists but there is no translation into current language (emitted only if "fallbackOnNoTranslation" is set to false)
+  - phrase path exists, hasn't translation into current language and hasn't translation into fallback language (emitted only if "fallbackOnNoTranslation" is set to true)
+  - output translation contains unprocessed variables which will shown to user  as is, e.g. %foo%
 
 #### Translations file structure, contextes and global context
 
-Translations structure is just a tree, so you can to structure translations as you want.
+Translations structure is just a json object, so you can to structure translations as you want.
 
 ```js
 export default {
@@ -233,8 +246,8 @@ export default {
   }
 }
 ```
-To get the translation of the anchor of the link to homepage into the current language, you should to pass the path to the phrase key into translation mechanism. In this case ```site.header.nav.home``` is the path, the ```site.header.nav``` part of this path is the "context" and ```home``` is the key of a phrase.
-So path to the any node of this tree which is not contains leafs is a context, each node which contains leafs is a key of a phrase and each leaf is the translation into an exact language.
+E.g. to get the translation of the anchor of the link to homepage into the current language, you should to pass the path to the phrase key into translation mechanism. In this case ```site.header.nav.home``` is the path, the part ```site.header.nav``` of this path is the "context" and ```home``` is the key of a phrase.
+So path to the any node which is not contains leafs is a context, each node which contains leafs is a key of a phrase and each leaf is the translation into an exact language.
 #### Global context
 Global context is the root-level key, defined in the corresponding option of the VueLocalize configuration file. The feature of the global context is that you don't need include its name in the path which passing into translation method/filter/directive. E.g. to translate phrase with path ```global.project-name``` you can write just ```{{ 'project-name' | translate }}``` instead of full path ```global.project-name```.
 
@@ -258,15 +271,15 @@ export default {
       subRoutes: {
         '/': {
           name: 'home-page',
-          component: 'HomePage'
+          component: HomePage
         },
         '/about': {
           name: 'about-page',
-          component: 'AboutPage'
+          component: AboutPage
         },
         '/contacts': {
           name: 'contacts-page',
-          component: 'ContactsPage'
+          component: ContactsPage
         },
       }
     },
@@ -303,9 +316,9 @@ yourdomain.com/ru/contacts
 
 Transitions between routes e.g. ```yourdomain.com/en/about``` and ```yourdomain.com/ru/about``` (when switching languages via language selector) will reuse the same component. So if you have any data at the page (in the component binded to the current route), and the switching to another language, data will not be affected despite the fact that the route has been actually changed. VueLocalize simply performs reactive translation of all the phrases at the page.
 
-##### Excluding leading language part from routes for default language
+##### Excluding leading language part from routes paths for default language
 Note that it's easy to exclude leading language part from routes for default language if needed.
-E.g. English is defined as default application language, so only thing we have to do for - set to ```false``` ```defaultLanguageRoute``` option in the config. Then we'll have the following set of paths:
+E.g. if English is defined as default application language, the only thing we have to do for - set to ```false``` the  ```defaultLanguageRoute``` option in the config. Then we'll have the following set of paths:
 
 ```
 # for English
@@ -327,15 +340,15 @@ export default {
       subRoutes: {
         '/': {
           name: 'en_home-page',
-          component: 'HomePage'
+          component: HomePage
         },
         '/about': {
           name: 'en_about-page',
-          component: 'AboutPage'
+          component: AboutPage
         },
         '/contacts': {
           name: 'en_contacts-page',
-          component: 'ContactsPage'
+          component: ContactsPage
         },
       }
     },
@@ -346,15 +359,15 @@ export default {
       subRoutes: {
         '/': {
           name: 'ru_home-page',
-          component: 'HomePage'
+          component: HomePage
         },
         '/about': {
           name: 'ru_about-page',
-          component: 'AboutPage'
+          component: AboutPage
         },
         '/contacts': {
           name: 'ru_contacts-page',
-          component: 'ContactsPage'
+          component: ContactsPage
         },
       }
     },
@@ -387,10 +400,10 @@ Simple selector with bootstrap dropdown
   <li class="dropdown" :class="{'open': opened}">
     <a href="javascript:;" @click="toggle">{{ currentLanguage | uppercase }} <span class="caret"></span></a>
     <ul class="dropdown-menu">
-      <li v-for="(code, config) in $localizeConf.list" v-if="code !== currentLanguage && config.enabled !== false">
+      <li v-for="(code, language) in $localizeConf.languages" v-if="code !== currentLanguage && language.enabled !== false">
           <a href="{{ $translateRoutePath($route.path, $route.name, code) }}" @click.prevent="changeLanguage(code)">
-            {{ code | uppercase }} | {{ 'global.lang.' + config.key | translate null code }}<br />
-            <small class="text-muted">{{ 'global.lang.' + config.key | translate null currentLanguage }}</small>
+            {{ code | uppercase }} | {{ 'global.lang.' + language.key | translate null code }}<br />
+            <small class="text-muted">{{ 'global.lang.' + language.key | translate null currentLanguage }}</small>
           </a>
       </li>
     </ul>
@@ -423,11 +436,13 @@ export default {
 </script>
 ```
 The example above uses the following features:
-- $localizeConf - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file
-- currentLanguage - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
-- $translateRoutePath() - global method of the VueLocalize plugin for translating path of the route to another language
+- ```$localizeConf``` - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file
+- ```currentLanguage```` - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
+- ```$translateRoutePath()``` - global method of the VueLocalize plugin for translating path of the route to another language
+- ```this.$store.dispatch('SET_APP_LANGUAGE', code)``` - dispatch the mutation
 
 Read more about these features in the "API" section below.
+Pay attention that in the example above we dispatch mutation only for non localized routes, but if route has flag ```localized: true``` we perform ```router.go``` and in this case mutation will be dispatched automatically inside the VueLocalize plugin
 
 ## Usage
 
