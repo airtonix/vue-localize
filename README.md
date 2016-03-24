@@ -399,11 +399,12 @@ export default {
 }
 </script>
 ```
-The example above uses the following things:
+The example above uses the following features:
 - $localizeConf - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file
 - currentLanguage - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
 - $translateRoutePath() - global method of the VueLocalize plugin for translating path of the route to another language
-Read more in the "API" section below.
+
+Read more about these features in the "API" section below.
 
 ## Usage
 
@@ -459,3 +460,23 @@ Translating into exact language, e.g. English
 ```html
 <span v-localize="{path: 'site.header.nav.home', lang: 'en'}"></span>
 ```
+
+#### Injection custom variables into complete translation
+
+## API
+VueLocalize provides some global methods, one global property, one global mixin, one filter, one directive and one mutation for switching languages
+
+#### Global properties and methods
+- $localizeConf
+- $translate()
+- $vueLocalizeInit
+- $localizeRoute
+- $translateRoutePath
+#### Filters
+- translate
+#### Directives
+- v-localize
+#### Mixins
+- currentLanguage
+#### Mutations
+- 'SET_APP_LANGUAGE'
