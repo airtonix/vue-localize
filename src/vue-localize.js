@@ -341,7 +341,7 @@ function install (Vue, options) {
       return newPath
     }
   }
-  Vue.prototype['$translateRoutePath'] = translateRoutePath
+  Vue.prototype['$localizeRoutePath'] = localizeRoutePath
 
   /**
    * Object with VueLocalize config
