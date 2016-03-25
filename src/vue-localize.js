@@ -343,6 +343,11 @@ function install (Vue, options) {
   }
   Vue.prototype['$localizeRoutePath'] = localizeRoutePath
 
+  function isJustLanguageSwitching(transition) {
+    return transition.from.originalName === transition.to.originalName
+  }
+  Vue.prototype['$isJustLanguageSwitching'] = isJustLanguageSwitching
+
   /**
    * Object with VueLocalize config
    */
