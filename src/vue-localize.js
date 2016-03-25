@@ -1,5 +1,6 @@
 import { kebabCase, replace, join, split, each, has, get, set, unset, clone, cloneDeep } from 'lodash'
 import { currentLanguage } from './vuex-getters'
+import { localizeVueDirective } from './vue-localize-directive'
 
 // @todo by Saymon: pick out into config
 var localStorageKey = 'currentLanguage'
@@ -400,47 +401,7 @@ function install (Vue, options) {
   })
 
   // Adding directive
-  Vue.directive('localize', {
-
-    deep: true,
-
-    /**
-     * Bind watcher for update translation on language changing
-     */
-    bind: function () {
-      const vm = this.vm
-      this.unwatch = vm.$watch('$store.state.vueLocalizeVuexStoreModule.currentLanguage', bind(this.updateContent, this))
-    },
-
-    /**
-     * Unbind watcher
-     */
-    unbind: function () {
-      this.unwatch && this.unwatch()
-    },
-
-    /**
-     * Render element with directive
-     */
-    update: function (target) {
-      this.path = target.path
-      this.vars = target.vars
-      this.lang = target.lang
-      var translateTo = target.lang || _currentLanguage()
-      var translation = translate(target.path, target.vars, translateTo)
-      this.el.innerHTML = translation
-    },
-
-    /**
-     * Update element innerHTML on language changing
-     */
-    updateContent: function (newLang) {
-      var translateTo = this.lang || newLang
-      var translation = translate(this.path, this.vars, translateTo)
-      this.el.innerHTML = translation
-    }
-
-  })
+  Vue.directive('localize', localizeVueDirective(config, _currentLanguage))
 }
 
 var plugin = {
