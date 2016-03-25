@@ -1,6 +1,6 @@
 {
   "name": "vue-localize",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Localization plugin for Vue.js based applications",
   "main": "dist/vue-localize.js",
   "scripts": {

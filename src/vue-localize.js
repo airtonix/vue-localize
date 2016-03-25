@@ -65,7 +65,7 @@ function install (Vue, options) {
    * @routesRegistry  {Object} - registry of a routes (with initial names and localized names)
    */
   var { store, config, router, routes } = options
-  const VARIABLES_REGEXP = /%[a-z]*%/g
+  const VARIABLES_REGEXP = /%[a-zA-Z0-9_-]*%/g
   const {
     bind
   } = Vue.util
