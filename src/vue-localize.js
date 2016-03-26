@@ -1,4 +1,4 @@
-import { kebabCase, replace, join, split, each, get, set, unset, clone, cloneDeep } from 'lodash'
+import { kebabCase, each, set, unset, clone, cloneDeep } from 'lodash'
 import { currentLanguage } from './vuex-getters'
 import { localizeVueDirective } from './vue-localize-directive'
 import { has } from './libs/utils'
@@ -66,9 +66,7 @@ export default function install (Vue, options) {
    * @config          {Object} - config object
    * @routesRegistry  {Object} - registry of a routes (with initial names and localized names)
    */
-  var { store, config, router, routes } = options
-  const VARIABLES_REGEXP = /%[a-zA-Z0-9_-]*%/g
-  const { bind } = Vue.util
+  const { store, config, router, routes } = options
 
   Vue.mixin({
     vuex: {
@@ -273,7 +271,7 @@ export default function install (Vue, options) {
     }
 
     if (config.defaultLanguageRoute === true) {
-      return replace(path, /^.{3}/g, '/' + newLang)
+      return path.replace(/^.{3}/g, '/' + newLang)
     }
 
     if (config.defaultLanguage === _currentLanguage()) {
@@ -281,7 +279,7 @@ export default function install (Vue, options) {
     }
 
     if (newLang === config.defaultLanguage) {
-      var newPath = replace(path, /^.{3}/g, '')
+      var newPath = path.replace(/^.{3}/g, '')
       if (!newPath.length) {
         newPath = '/'
       }
