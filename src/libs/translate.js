@@ -76,6 +76,7 @@ export class Translator {
     }
 
     const translationPath = exactPath + '.' + lang
+
     const isTranslationExists = has(this.config.translations, translationPath)
     if (isTranslationExists) {
       const translationExpected = get(this.config.translations, translationPath)
