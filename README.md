@@ -1,11 +1,17 @@
 # vue-localize
 
-> Localization plugin for vue.js based applications with Vuex and VueRouter
+> Localization plugin for implementation multilingual functionality in VueJS based applications with Vuex and VueRouter
+
+## Demo
+
+[Working example](http://env-5533755.j.layershift.co.uk/vue-localize-example/dist/)
+
+[Example sources](https://github.com/Saymon-biz/vue-localize-example)
 
 ## Important
 You can NOT use this plugin without Vuex
 
-You can NOT use this plugin without VueRouter, however it will be possible in the next versions (newer than 1.0.3).
+You can NOT use this plugin without VueRouter, however it will be possible at an early date (and this line will be deleted immediately).
 
 ## Links
 
@@ -20,7 +26,7 @@ You can NOT use this plugin without VueRouter, however it will be possible in th
 - Automatic routes localization (adding leading language part into routes paths): ```/about ===> /en/about, /ru/about,...``` (only with official VueRouter)
 - Wrapper for route name for using in v-link for proper navigation: ``` v-link="{name: $localizeRoute('about')}" ```
 - Translating page title
-- Route path translating: ``` $translateRoutePath($route.path, $route.name, lang) ```
+- Route path translating: ``` $localizeRoutePath($route, lang) ```
 - Option for excluding language part from route path for default language
 - Option for custom name of the key in local storage
 - Global mixin for getting current language in Vue components via Vuex getter "currentLanguage"
@@ -407,7 +413,7 @@ Simple selector with bootstrap dropdown
     <a href="javascript:;" @click="toggle">{{ currentLanguage | uppercase }} <span class="caret"></span></a>
     <ul class="dropdown-menu">
       <li v-for="(code, language) in $localizeConf.languages" v-if="code !== currentLanguage && language.enabled !== false">
-          <a href="{{ $translateRoutePath($route.path, $route.name, code) }}" @click.prevent="changeLanguage(code)">
+          <a href="{{ $localizeRoutePath($route, code) }}" @click.prevent="changeLanguage(code)">
             {{ code | uppercase }} | {{ 'global.lang.' + language.key | translate null code }}<br />
             <small class="text-muted">{{ 'global.lang.' + language.key | translate null currentLanguage }}</small>
           </a>
@@ -444,7 +450,7 @@ export default {
 The example above uses the following features:
 - ```$localizeConf``` - global property of the VueLocalize plugin, which contains the configuration object from the VueLocalize config file
 - ```currentLanguage``` - global mixin which is just the proxy to Vuex getter for accessing reactive state of current language in Vuex store
-- ```$translateRoutePath()``` - global method of the VueLocalize plugin for translating path of the route to another language
+- ```$localizeRoutePath()``` - global method of the VueLocalize plugin for translating path of the route to another language
 - ```this.$store.dispatch('SET_APP_LANGUAGE', code)``` - dispatch the mutation
 
 Read more about these features in the "API" section below.
@@ -576,9 +582,8 @@ or
   - **name** - (required) - initial name of a route as defined in your router config
 
 
-- **$translateRoutePath(path, name, lang)** - method for translating path of the current route to another language.
-  - **path** - (required) - path of the route
-  - **name** - (required) - name of the route
+- **$localizeRoutePath(route, lang)** - method for translating path of the current route to another language.
+  - **route** - (required) - route object
   - **lang** - (optional) - exact language (using current selected by default)
 
 
