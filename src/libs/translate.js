@@ -1,4 +1,5 @@
-import { replace, join, split, each, has, get } from 'lodash'
+import { replace, join, split, each, get } from 'lodash'
+import { has } from './utils'
 
 export class Translator {
   /**

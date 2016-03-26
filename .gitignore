@@ -1,6 +1,8 @@
 .DS_Store
+.idea
 /node_modules
 /dist/*
+test/unit/coverage/*
 !.gitignore
 vue-localize.sublime-project
 vue-localize.sublime-workspace

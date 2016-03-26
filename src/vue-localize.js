@@ -1,6 +1,7 @@
-import { kebabCase, replace, join, split, each, has, get, set, unset, clone, cloneDeep } from 'lodash'
+import { kebabCase, replace, join, split, each, get, set, unset, clone, cloneDeep } from 'lodash'
 import { currentLanguage } from './vuex-getters'
 import { localizeVueDirective } from './vue-localize-directive'
+import { has } from './libs/utils'
 
 // @todo by Saymon: pick out into config
 var localStorageKey = 'currentLanguage'
@@ -59,7 +60,7 @@ export const vueLocalizeVuexStoreModule = {
  * @Vue     {Object} - Vue
  * @options {Object} - plugin options
  */
-function install (Vue, options) {
+export default function install (Vue, options) {
   /**
    * @store           {Object} - an instance of a vuex storage
    * @config          {Object} - config object
@@ -67,9 +68,7 @@ function install (Vue, options) {
    */
   var { store, config, router, routes } = options
   const VARIABLES_REGEXP = /%[a-zA-Z0-9_-]*%/g
-  const {
-    bind
-  } = Vue.util
+  const { bind } = Vue.util
 
   Vue.mixin({
     vuex: {
@@ -94,7 +93,7 @@ function install (Vue, options) {
   }
 
   /**
-   * Recursive renaming subrouts
+   * Recursive renaming subroutes
    */
   function _localizeSubroutes (subroutes, lang, routesRegistry) {
     each(subroutes, function (route, path) {
@@ -241,13 +240,17 @@ function install (Vue, options) {
     transition.next()
   })
 
-  function init (route) {
+  /**
+   * Object with VueLocalize config
+   */
+  Vue.prototype['$localizeConf'] = config
+
+  Vue.prototype['$vueLocalizeInit'] = (route) => {
     var initialLanguage = has(route, 'localized') ? route.lang : getFromLocalStorage()
     if (initialLanguage) {
       store.dispatch('SET_APP_LANGUAGE', initialLanguage, config.resaveOnLocalizedRoutes)
     }
   }
-  Vue.prototype['$vueLocalizeInit'] = init
 
   /**
    * Get the path of a phrase and translates it into the current
@@ -307,7 +310,7 @@ function install (Vue, options) {
   /**
    * Localize route name by adding prefix (e.g. 'en_') with language code.
    */
-  function localizeRoute (name, lang = null) {
+  Vue.prototype['$localizeRoute'] = (name, lang = null) => {
     if (!has(routesRegistry.initial, name)) {
       return name
     }
@@ -315,9 +318,8 @@ function install (Vue, options) {
     var prefix = (lang || _currentLanguage()) + '_'
     return prefix + name
   }
-  Vue.prototype['$localizeRoute'] = localizeRoute
 
-  function localizeRoutePath (route, newLang) {
+  Vue.prototype['$localizeRoutePath'] = (route, newLang) => {
     var path = route.path
     var name = route.name
 
@@ -342,17 +344,10 @@ function install (Vue, options) {
       return newPath
     }
   }
-  Vue.prototype['$localizeRoutePath'] = localizeRoutePath
 
-  function isJustLanguageSwitching(transition) {
+  Vue.prototype['$isJustLanguageSwitching'] = (transition) => {
     return transition.from.originalName === transition.to.originalName
   }
-  Vue.prototype['$isJustLanguageSwitching'] = isJustLanguageSwitching
-
-  /**
-   * Object with VueLocalize config
-   */
-  Vue.prototype['$localizeConf'] = config
 
   /**
    * Injects variables values into already translated string by
@@ -394,8 +389,7 @@ function install (Vue, options) {
   }
 
   // Adding global filter and global method $translate
-  var helpers = { translate }
-  each(helpers, function (helper, name) {
+  each({ translate }, function (helper, name) {
     Vue.filter(kebabCase(name), helper)
     Vue.prototype['$' + name] = helper
   })
@@ -403,9 +397,3 @@ function install (Vue, options) {
   // Adding directive
   Vue.directive('localize', localizeVueDirective(config, _currentLanguage))
 }
-
-var plugin = {
-  install
-}
-
-export default plugin

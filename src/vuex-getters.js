@@ -1,3 +1,3 @@
-export const currentLanguage = state => {
+export const currentLanguage = (state) => {
   return state.vueLocalizeVuexStoreModule.currentLanguage
 }
