@@ -253,61 +253,6 @@ export default function install (Vue, options) {
   }
 
   /**
-   * Get the path of a phrase and translates it into the current
-   * selected application language or into the language received in 'lang' param
-   *
-   * @param   {String} path
-   * @param   {Object} vars
-   * @param   {string} lang
-   * @return  {String}
-   */
-  function translate (path, vars = null, lang = null) {
-    var lc = _currentLanguage()
-    var translateTo = lang || lc
-
-    var phrasePathParts = split(path, '.')
-    var isGlobal = phrasePathParts.length === 1
-    var exactPath = isGlobal ? config.defaultContextName + '.' + path : path
-
-    if (!has(config.translations, exactPath)) {
-      if (!config.supressWarnings) {
-        console.warn('[VueLocalize]. Undefined path: "' + exactPath + '"')
-      }
-
-      return exactPath
-    }
-
-    var translationPath = exactPath + '.' + translateTo
-    var isTranslationExists = has(config.translations, translationPath)
-    if (isTranslationExists) {
-      var translationExpected = get(config.translations, translationPath)
-      return _processVariables(translationExpected, vars, translationPath)
-    }
-
-    if (!config.fallbackOnNoTranslation) {
-      if (!config.supressWarnings) {
-        console.warn('[VueLocalize]. Undefined translation: "' + translationPath + '"')
-      }
-
-      return exactPath
-    }
-
-    var fallbackTranslationPath = exactPath + '.' + config.fallbackLanguage
-    var isFallbackTranslationExists = has(config.translations, fallbackTranslationPath)
-
-    if (translateTo === config.fallbackLanguage || !isFallbackTranslationExists) {
-      if (!config.supressWarnings) {
-        console.warn('[VueLocalize]. Undefined FALLBACK translation: "' + fallbackTranslationPath + '"')
-      }
-
-      return exactPath
-    }
-
-    var translationFallback = get(config.translations, fallbackTranslationPath)
-    return _processVariables(translationFallback, vars, fallbackTranslationPath)
-  }
-
-  /**
    * Localize route name by adding prefix (e.g. 'en_') with language code.
    */
   Vue.prototype['$localizeRoute'] = (name, lang = null) => {
@@ -349,45 +294,8 @@ export default function install (Vue, options) {
     return transition.from.originalName === transition.to.originalName
   }
 
-  /**
-   * Injects variables values into already translated string by
-   * replcaing their string keys with their real values
-   *
-   * @return {String}
-   */
-  function _processVariables (translation, vars, path) {
-    var arrVars = translation.match(VARIABLES_REGEXP)
-    if (!arrVars) {
-      return translation
-    }
-
-    if (!vars) {
-      _logUnreplacedVars(arrVars, path)
-      return translation
-    }
-
-    each(vars, function (value, key) {
-      translation = replace(translation, key, value)
-    })
-
-    var unreplacedVars = translation.match(VARIABLES_REGEXP)
-    if (unreplacedVars) {
-      _logUnreplacedVars(unreplacedVars, path)
-    }
-
-    return translation
-  }
-
-  /**
-   * Logs warnings into console if the translation contains some unreplaced variable
-   * @return {void}
-   */
-  function _logUnreplacedVars (vars, path) {
-    if (!config.supressWarnings) {
-      console.warn('VueLocalize. Unreplaced: ' + join(vars, ', ') + ' in "' + path + '"')
-    }
-  }
-
+  const translator = new Translator(config, _currentLanguage)
+  const translate = translator.translate
   // Adding global filter and global method $translate
   each({ translate }, function (helper, name) {
     Vue.filter(kebabCase(name), helper)
@@ -395,5 +303,5 @@ export default function install (Vue, options) {
   })
 
   // Adding directive
-  Vue.directive('localize', localizeVueDirective(config, _currentLanguage))
+  Vue.directive('localize', localizeVueDirective(translator))
 }

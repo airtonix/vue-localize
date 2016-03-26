@@ -4,9 +4,9 @@
 
 import {Translator} from './libs/translate'
 
-export const localizeVueDirective = (config,languageGetter) => {
+export const localizeVueDirective = (translator) => {
   return {
-    translator: null,
+    translator: translator,
     deep: true,
 
     /**
@@ -14,7 +14,6 @@ export const localizeVueDirective = (config,languageGetter) => {
      */
     bind: function () {
       const vm = this.vm
-      this.translator = new Translator(config, languageGetter)
       this.unwatch = vm.$watch('$store.state.vueLocalizeVuexStoreModule.currentLanguage', bind(this.updateContent, this))
     },
 
@@ -32,7 +31,7 @@ export const localizeVueDirective = (config,languageGetter) => {
       this.path = target.path
       this.vars = target.vars
       this.lang = target.lang
-      var translateTo = target.lang || languageGetter()
+      var translateTo = target.lang || this.translator.getCurrentOrDefault()
       var translation = this.translator.translate(target.path, target.vars, translateTo)
       this.el.innerHTML = translation
     },
