@@ -123,8 +123,8 @@ export default new Vuex.Store({
 })
 ```
 
-#### Setting initial state
-You can't know in advance, what exact route can initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or saved in local storage if there is no language part in route (e.g. in administrative section), or the default language.
+#### Setting up an initial state
+You can't know in advance, what exact route will initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or saved in local storage if there is no language part in route (e.g. in administrative section), or the default language.
 
 And there is the global method ```$vueLocalizeInit($route)``` for this purpose. It's just a function which getting a route object as attribute.
 
