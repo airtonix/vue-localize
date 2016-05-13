@@ -104,7 +104,8 @@ When using automatic routes localization, VueLocalize will transform your initia
 #### Adding Vuex store module
 
 > Note that VueLocalize contains built-in Vuex store module, so if Vuex states and mutations in your application doesn't splitted in sub modules, it's time to do so. How how to split state and mutations into sub modules explaned here [http://vuex.vuejs.org/en/structure.html](http://vuex.vuejs.org/en/structure.html) 
-Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
+
+> Also note that it is important to use exact name of module ```vueLocalizeVuexStoreModule``` in your code.
 
 Code for your store.js
 ```js
@@ -124,7 +125,7 @@ export default new Vuex.Store({
 ```
 
 #### Setting up an initial state
-You can't know in advance, what exact route will initialize application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or saved in local storage if there is no language part in route (e.g. in administrative section), or the default language.
+You can't know in advance, what exact route will initialize your application. It can be either route with leading language part, either without. And VueLocalize must understand, what exact language it should set as initial. It can be language from route, or saved in local storage if there is no language part in route (e.g. in administrative section), or the default language.
 
 And there is the global method ```$vueLocalizeInit($route)``` for this purpose. It's just a function which getting a route object as attribute.
 
@@ -141,10 +142,9 @@ export default {
   }
 }
 </script>
-
 ```
 
-## Config file
+## Configuration file
 
 ```js
 import translations from './vue-localize-translations'
@@ -277,8 +277,7 @@ import SiteLayout from './components/AdminLayout'
 export default {
     // the parent route for public section of your application
     '/': {
-      // (!!!) the only thing you have to add for localize this route and all nested routes recursively
-      localized: true,
+      localized: true, // (!!!) the only thing you have to add for localize this route and all nested routes recursively
       component: SiteLayout,
       subRoutes: {
         '/': {
