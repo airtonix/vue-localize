@@ -25,7 +25,7 @@ You can NOT use this plugin without VueRouter, however it will be possible at an
 - Fallback language support
 - Automatic routes localization (adding leading language part to the routes paths): ```/about ===> /en/about, /ru/about,...``` (only with official VueRouter)
 - Wrapper for route name for using in v-link for proper navigation: ``` v-link="{name: $localizeRoute('about')}" ```
-- <title> tag translation
+- ```<title>``` tag translation
 - Route path translation: ``` $localizeRoutePath($route, lang) ```
 - Option for excluding language part from route path for default language
 - Option for custom name of the key in local storage
