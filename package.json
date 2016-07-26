@@ -8,7 +8,7 @@
     "test": "cross-env NODE_ENV=test npm run unit",
     "prebuild": "rimraf ./dist && mkdirp dist",
     "build": "cross-env NODE_ENV=prod babel-node ./build",
-    "dev": "node build/dev-server.js"
+    "dev": "cross-env NODE_ENV=dev babel-node ./build/dev-server.js"
   },
   "babel": {
     "presets": [
@@ -19,6 +19,7 @@
     "vue": "^1.0.17"
   },
   "devDependencies": {
+    "kebab-case": "^1.0.0",
     "babel-cli": "^6.11.4",
     "babel-core": "^6.7.4",
     "babel-loader": "^6.2.4",
