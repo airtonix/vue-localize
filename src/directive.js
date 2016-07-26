@@ -2,7 +2,7 @@
  * Created by vestnik on 25/03/16.
  */
 
-import {Translator} from './libs/translate'
+import { Translator } from './libs/translate';
 
 export const localizeVueDirective = (translator) => {
   return {
@@ -14,7 +14,7 @@ export const localizeVueDirective = (translator) => {
      */
     bind: function () {
       const vm = this.vm
-      this.unwatch = vm.$watch('$store.state.vueLocalizeVuexStoreModule.currentLanguage', bind(this.updateContent, this))
+      this.unwatch = vm.$watch(`$store.state.LanguageStore.current`, bind(this.updateContent, this))
     },
 
     /**
